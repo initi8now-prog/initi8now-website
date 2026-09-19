@@ -20,9 +20,14 @@
     burger.setAttribute('aria-expanded', open);
   });
 
-  /* current page highlight */
-  const here = location.pathname.split('/').pop() || 'index.html';
-  $$('.nav ul a').forEach(a => { if (a.getAttribute('href') === here) a.setAttribute('aria-current', 'page'); });
+  /* current page highlight (clean URLs: /, /students/, /team/ ...) */
+  const seg = location.pathname.replace(/index\.html$/, '').split('/').filter(Boolean).pop() || '';
+  $$('.nav ul a').forEach(a => {
+    const h = (a.getAttribute('href') || '').replace(/index\.html$/, '');
+    const s = h.split('/').filter(p => p && p !== '.' && p !== '..').pop() || '';
+    if (s === seg) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  });
 
   /* reveal on scroll */
   const io = new IntersectionObserver(es => es.forEach(e => {

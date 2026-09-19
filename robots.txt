@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://initi8now.com/sitemap.xml

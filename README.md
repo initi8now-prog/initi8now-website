@@ -4,19 +4,25 @@ Static site: plain HTML + CSS + JS. No build step, no framework. Upload the fold
 
 ## Files
 ```
-index.html        Home (hero animation, live job ticker, mode switch, how-it-works rail,
-                  animated phone app preview, verification flow diagram,
-                  "Real or scam?" game, badge collector, testimonials, FAQ)
-students.html     For students
-employers.html    For employers
-about.html        About + brand intro video + timeline
-team.html         Leadership: Kalyani Mishra (MD), Diksha Mishra (Director & Founder)
-contact.html      Phone, email, WhatsApp, LinkedIn, Instagram + message form
-css/style.css     All styles (brand tokens at the top of the file)
-js/main.js        All interactions
-assets/           Logos, team photos, favicon, intro video, app preview video
-.nojekyll         Tells GitHub Pages to serve files exactly as they are
+index.html            Home
+students/index.html   For students      -> initi8now.com/students/
+employers/index.html  For employers     -> initi8now.com/employers/
+about/index.html      About             -> initi8now.com/about/
+team/index.html       Team              -> initi8now.com/team/
+contact/index.html    Contact           -> initi8now.com/contact/
+students.html etc.    One-line redirects so any old .html link still works
+404.html              Shown for any URL that doesn't exist
+sitemap.xml           For Google
+robots.txt            For Google
+css/style.css         All styles (brand tokens at the top of the file)
+js/main.js            All interactions
+assets/               Logos, team photos, favicon, three videos
+.nojekyll             Tells GitHub Pages to serve files exactly as they are
 ```
+
+Pages live in folders so the address bar shows `initi8now.com/team/` rather than
+`team.html`. To edit a page, open the `index.html` inside that folder.
+Links inside a subfolder page use `../` (e.g. `../css/style.css`, `../about/`).
 
 ## Edit the basics
 - Phone / email / socials: they appear in the footer of every page and on contact.html. Search-and-replace
