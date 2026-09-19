@@ -5,6 +5,7 @@ Static site: plain HTML + CSS + JS. No build step, no framework. Upload the fold
 ## Files
 ```
 index.html        Home (hero animation, live job ticker, mode switch, how-it-works rail,
+                  animated phone app preview, verification flow diagram,
                   "Real or scam?" game, badge collector, testimonials, FAQ)
 students.html     For students
 employers.html    For employers
@@ -13,7 +14,7 @@ team.html         Leadership: Kalyani Mishra (MD), Diksha Mishra (Director & Fou
 contact.html      Phone, email, WhatsApp, LinkedIn, Instagram + message form
 css/style.css     All styles (brand tokens at the top of the file)
 js/main.js        All interactions
-assets/           Logos, team photos, favicon, intro video
+assets/           Logos, team photos, favicon, intro video, app preview video
 .nojekyll         Tells GitHub Pages to serve files exactly as they are
 ```
 
@@ -59,3 +60,15 @@ Upload the contents of this folder into `public_html/` via File Manager or FTP. 
 
 ## Updating later
 Edit the file → commit/upload again → the site updates within a minute.
+
+## Updating the site on GitHub later
+1. Open your repo on github.com.
+2. To replace a file: click the file → pencil icon → paste new content → Commit changes.
+3. To replace many files at once: click **Add file → Upload files**, drag the new versions in,
+   and commit. Same-named files are overwritten.
+4. GitHub Pages redeploys automatically within about a minute. Hard-refresh with Ctrl+F5 to see it.
+
+## Videos included
+- `assets/initi8now-intro.mp4` — 6s logo intro (16:9), used on the About page.
+- `assets/app-preview.mp4` — 13s app preview (4:5), used on the For students page and
+  sized for Instagram / LinkedIn posts.
