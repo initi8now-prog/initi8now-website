@@ -75,8 +75,11 @@ Edit the file → commit/upload again → the site updates within a minute.
 4. GitHub Pages redeploys automatically within about a minute. Hard-refresh with Ctrl+F5 to see it.
 
 ## Videos included
-- `assets/how-it-works.mp4` — 17s explainer (16:9) on the HOME page, click-to-play.
-  Poster frame: `assets/how-it-works-poster.jpg`.
+- `assets/app-walkthrough.mp4` — 28s app walkthrough (16:9) on the HOME page, click-to-play.
+  Four scenes: find a verified gig, apply in one tap, clear KYC once, withdraw to UPI.
+  Poster frame: `assets/app-walkthrough-poster.jpg`.
+- `assets/how-it-works.mp4` — 17s explainer (16:9), spare. Swap it onto the home page by
+  changing the `src` and `poster` in the `#watch` section of index.html.
 - `assets/initi8now-intro.mp4` — 6s logo intro (16:9), used on the About page.
 - `assets/app-preview.mp4` — 13s app preview (4:5), used on the For students page and
   sized for Instagram / LinkedIn posts.
