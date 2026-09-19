@@ -143,6 +143,17 @@
     update();
   }
 
+  /* landing reel: click to play, pause when scrolled away */
+  const reel = $('#reel'), reelv = $('#reelv');
+  if (reel && reelv) {
+    const start = () => { reel.classList.add('playing'); reelv.play(); };
+    reel.addEventListener('click', () => reelv.paused ? start() : (reelv.pause(), reel.classList.remove('playing')));
+    reelv.addEventListener('ended', () => reel.classList.remove('playing'));
+    new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting && !reelv.paused) { reelv.pause(); reel.classList.remove('playing'); }
+    }), { threshold: .25 }).observe(reel);
+  }
+
   /* team cards tap (mobile) */
   $$('.member').forEach(m => m.addEventListener('click', () => m.classList.toggle('open')));
 
