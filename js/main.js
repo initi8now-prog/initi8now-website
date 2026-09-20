@@ -1,180 +1,328 @@
 /* Initi8Now — interactions */
 (function () {
-  const $ = (s, c = document) => c.querySelector(s);
-  const $$ = (s, c = document) => [...c.querySelectorAll(s)];
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  'use strict';
+  var $ = function (s, c) { return (c || document).querySelector(s); };
+  var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var inr = function (n) { return '\u20B9' + Math.round(n).toLocaleString('en-IN'); };
 
-  /* scroll progress */
-  const bar = $('#progress');
-  const onScroll = () => {
+  /* ---------- scroll progress ---------- */
+  var bar = $('#progress');
+  function onScroll() {
     if (!bar) return;
-    const h = document.documentElement;
-    bar.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
-  };
-  addEventListener('scroll', onScroll, { passive: true }); onScroll();
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? h.scrollTop / max * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
-  /* mobile nav */
-  const burger = $('.burger'), menu = $('.nav ul');
-  if (burger) burger.addEventListener('click', () => {
-    const open = menu.classList.toggle('open');
-    burger.setAttribute('aria-expanded', open);
-  });
+  /* ---------- mobile nav (A11Y-02, MOB-04, MOB-08) ---------- */
+  var burger = $('.burger'), menu = $('#primary-menu');
+  function setMenu(open) {
+    if (!menu) return;
+    menu.classList.toggle('open', open);
+    burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) { var a = $('a', menu); if (a) a.focus(); }
+  }
+  if (burger && menu) {
+    burger.addEventListener('click', function () { setMenu(!menu.classList.contains('open')); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && menu.classList.contains('open')) { setMenu(false); burger.focus(); }
+    });
+    document.addEventListener('click', function (e) {
+      if (!menu.classList.contains('open')) return;
+      if (!menu.contains(e.target) && !burger.contains(e.target)) setMenu(false);
+    });
+  }
 
-  /* current page highlight (clean URLs: /, /students/, /team/ ...) */
-  const seg = location.pathname.replace(/index\.html$/, '').split('/').filter(Boolean).pop() || '';
-  $$('.nav ul a').forEach(a => {
-    const h = (a.getAttribute('href') || '').replace(/index\.html$/, '');
-    const s = h.split('/').filter(p => p && p !== '.' && p !== '..').pop() || '';
-    if (s === seg) a.setAttribute('aria-current', 'page');
-    else a.removeAttribute('aria-current');
-  });
+  /* ---------- reveal on scroll ---------- */
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    $$('.rv').forEach(function (el) { io.observe(el); });
+  } else {
+    $$('.rv').forEach(function (el) { el.classList.add('in'); });
+  }
 
-  /* reveal on scroll */
-  const io = new IntersectionObserver(es => es.forEach(e => {
-    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
-  }), { threshold: 0.15 });
-  $$('.rv').forEach(el => io.observe(el));
-
-  /* hero glow follows cursor */
-  const glow = $('.hero .glow');
-  if (glow && !reduce) addEventListener('pointermove', e => {
-    const x = (e.clientX / innerWidth - .5) * 120, y = (e.clientY / innerHeight - .5) * 120;
-    glow.style.transform = `translate(${x}px,${y}px)`;
+  /* ---------- hero glow ---------- */
+  var glow = $('.hero .glow');
+  if (glow && !reduce) window.addEventListener('pointermove', function (e) {
+    glow.style.transform = 'translate(' + (e.clientX / window.innerWidth - .5) * 110 + 'px,' + (e.clientY / window.innerHeight - .5) * 110 + 'px)';
   }, { passive: true });
 
-  /* size the infinity stroke to its real length so it draws fully */
-  const loop = $('#loop8');
-  if (loop) { const L = loop.getTotalLength(); loop.style.strokeDasharray = L; loop.style.strokeDashoffset = reduce ? 0 : L; }
-
-  /* rotating word in hero headline */
-  const swap = $('.swap');
-  if (swap) {
-    const words = JSON.parse(swap.dataset.words);
-    let i = 0;
-    setInterval(() => {
-      i = (i + 1) % words.length;
-      swap.style.opacity = 0; swap.style.transform = 'translateY(10px)';
-      setTimeout(() => { swap.textContent = words[i]; swap.style.transition = 'opacity .4s, transform .4s'; swap.style.opacity = 1; swap.style.transform = 'none'; }, 250);
-    }, 2400);
+  /* ---------- hero infinity stroke length ---------- */
+  var loop = $('#loop8');
+  if (loop && loop.getTotalLength) {
+    var L = loop.getTotalLength();
+    loop.style.strokeDasharray = L;
+    loop.style.setProperty('--len', L);
   }
 
-  /* student / employer mode */
-  const modeBtns = $$('.mode button');
-  const applyMode = m => {
-    modeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === m));
-    $$('[data-for]').forEach(el => el.hidden = el.dataset.for !== m);
-    document.body.dataset.mode = m;
-  };
-  modeBtns.forEach(b => b.addEventListener('click', () => applyMode(b.dataset.mode)));
+  /* ---------- rotating headline word (A11Y-07) ---------- */
+  var swap = $('.swap');
+  if (swap && !reduce) {
+    var words = JSON.parse(swap.getAttribute('data-words')), wi = 0;
+    setInterval(function () {
+      wi = (wi + 1) % words.length;
+      swap.style.opacity = 0; swap.style.transform = 'translateY(8px)';
+      setTimeout(function () { swap.textContent = words[wi]; swap.style.opacity = 1; swap.style.transform = 'none'; }, 300);
+    }, 2800);
+  }
+
+  /* ---------- student / employer mode (A11Y-06, BUG-10) ---------- */
+  var modeBtns = $$('.mode button');
+  function applyMode(m) {
+    modeBtns.forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-mode') === m ? 'true' : 'false'); });
+    $$('[data-for]').forEach(function (el) { el.hidden = el.getAttribute('data-for') !== m; });
+    var nav = $('.cta-nav');
+    if (nav) {
+      var hiring = m === 'employer';
+      nav.textContent = hiring ? 'Post a role' : 'Get early access';
+      nav.href = hiring ? nav.getAttribute('data-employer-href') : nav.getAttribute('data-student-href');
+      if (hiring) { nav.removeAttribute('target'); nav.removeAttribute('rel'); }
+      else { nav.target = '_blank'; nav.rel = 'noopener'; }
+    }
+  }
+  modeBtns.forEach(function (b) { b.addEventListener('click', function () { applyMode(b.getAttribute('data-mode')); }); });
   if (modeBtns.length) applyMode('student');
 
-  /* ticker duplicate for seamless loop */
-  const track = $('.ticker .track');
-  if (track) track.innerHTML += track.innerHTML;
+  /* ---------- ticker duplicate (A11Y-10) ---------- */
+  var track = $('.ticker .track');
+  if (track && !reduce) {
+    var clone = track.cloneNode(true);
+    clone.setAttribute('aria-hidden', 'true');
+    $$('span', clone).forEach(function (s) { s.setAttribute('aria-hidden', 'true'); });
+    track.innerHTML += clone.innerHTML;
+  }
 
-  /* counters */
-  const cio = new IntersectionObserver(es => es.forEach(e => {
-    if (!e.isIntersecting) return; cio.unobserve(e.target);
-    const el = e.target, end = +el.dataset.count, suf = el.dataset.suffix || '', pre = el.dataset.prefix || '';
-    if (reduce) { el.innerHTML = '<i>' + pre + '</i>' + end.toLocaleString('en-IN') + '<i>' + suf + '</i>'; return; }
-    const t0 = performance.now(), dur = 1800;
-    const tick = t => {
-      const p = Math.min(1, (t - t0) / dur), v = Math.round(end * (1 - Math.pow(1 - p, 3)));
-      el.innerHTML = '<i>' + pre + '</i>' + v.toLocaleString('en-IN') + '<i>' + suf + '</i>';
-      if (p < 1) requestAnimationFrame(tick);
-    }; requestAnimationFrame(tick);
-  }), { threshold: .5 });
-  $$('[data-count]').forEach(el => cio.observe(el));
+  /* ---------- counters (BUG-04: HTML already holds the final value) ---------- */
+  if ('IntersectionObserver' in window && !reduce) {
+    var cio = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return; cio.unobserve(e.target);
+        var el = e.target, end = +el.getAttribute('data-count');
+        var pre = el.getAttribute('data-prefix') || '', suf = el.getAttribute('data-suffix') || '';
+        var t0 = performance.now();
+        (function tick(t) {
+          var p = Math.min(1, (t - t0) / 1700);
+          el.textContent = pre + Math.round(end * (1 - Math.pow(1 - p, 3))).toLocaleString('en-IN') + suf;
+          if (p < 1) requestAnimationFrame(tick);
+        })(t0);
+      });
+    }, { threshold: .5 });
+    $$('[data-count]').forEach(function (el) { cio.observe(el); });
+  }
 
-  /* process rail: drag + arrows */
-  const rail = $('.rail');
+  /* ---------- earnings calculator ---------- */
+  var KINDS = {
+    tech:     { rate: 320, jobs: ['Bug fixes for a D2C store', 'React landing page', 'QA testing sprint'] },
+    creative: { rate: 260, jobs: ['Reels edit \u2014 six clips', 'Poster set for a fest', 'Thumbnail pack'] },
+    content:  { rate: 210, jobs: ['Blog: two x 800 words', 'Product copy refresh', 'Newsletter draft'] },
+    ops:      { rate: 180, jobs: ['Event day crew', 'Survey collection', 'Stall promotions'] }
+  };
+  var calc = $('[data-calc]');
+  if (calc) {
+    var hours = $('[data-hours]', calc), hoursOut = $('[data-hours-out]', calc),
+        rateOut = $('[data-rate-out]', calc), payout = $('[data-payout]', calc),
+        weekly = $('[data-weekly]', calc), ledger = $('[data-ledger]', calc),
+        chips = $$('.chip', calc), kind = 'tech';
+    function paint() {
+      var h = +hours.value, k = KINDS[kind], week = h * k.rate, month = week * 4.3;
+      hours.style.setProperty('--fill', ((h - hours.min) / (hours.max - hours.min) * 100) + '%');
+      hoursOut.textContent = h + (h === 1 ? ' hour' : ' hours') + ' / week';
+      rateOut.textContent = inr(k.rate) + ' / hour';
+      weekly.textContent = inr(week) + ' a week';
+      payout.textContent = inr(month);
+      ledger.innerHTML = '';
+      k.jobs.forEach(function (j, n) {
+        var row = document.createElement('li');
+        row.className = 'ledger-row';
+        row.innerHTML = '<span class="who"></span><span class="amt"></span>';
+        $('.who', row).textContent = j;
+        $('.amt', row).textContent = '+ ' + inr([0.42, 0.33, 0.25][n] * week);
+        ledger.appendChild(row);
+      });
+    }
+    hours.addEventListener('input', paint);
+    chips.forEach(function (c) {
+      c.addEventListener('click', function () {
+        kind = c.getAttribute('data-kind');
+        chips.forEach(function (x) { x.setAttribute('aria-pressed', x === c ? 'true' : 'false'); });
+        paint();
+      });
+    });
+    paint();
+  }
+
+  /* ---------- process rail ---------- */
+  var rail = $('.rail');
   if (rail) {
-    let down = false, sx = 0, sl = 0;
-    rail.addEventListener('pointerdown', e => { down = true; sx = e.clientX; sl = rail.scrollLeft; rail.classList.add('dragging'); });
-    addEventListener('pointerup', () => { down = false; rail.classList.remove('dragging'); });
-    rail.addEventListener('pointermove', e => { if (down) rail.scrollLeft = sl - (e.clientX - sx); });
-    $$('.rail-nav button').forEach(b => b.addEventListener('click', () => rail.scrollBy({ left: (b.dataset.dir === 'next' ? 1 : -1) * 360, behavior: 'smooth' })));
+    var down = false, sx = 0, sl = 0;
+    rail.addEventListener('pointerdown', function (e) { down = true; sx = e.clientX; sl = rail.scrollLeft; rail.classList.add('dragging'); });
+    window.addEventListener('pointerup', function () { down = false; rail.classList.remove('dragging'); });
+    rail.addEventListener('pointermove', function (e) { if (down) rail.scrollLeft = sl - (e.clientX - sx); });
+    $$('.rail-nav button').forEach(function (b) {
+      b.addEventListener('click', function () { rail.scrollBy({ left: (b.getAttribute('data-dir') === 'next' ? 1 : -1) * 340, behavior: reduce ? 'auto' : 'smooth' }); });
+    });
   }
 
-  /* scam game */
-  const deck = $('.deck');
+  /* ---------- scam game (BUG-05 next button, BUG-06 real swipe) ---------- */
+  var deck = $('.deck');
   if (deck) {
-    const cards = $$('.card', deck); cards.forEach((c, i) => c.style.zIndex = cards.length - i); // first in DOM = top
-    let idx = 0, score = 0;
-    const scoreEl = $('.score'), doneEl = $('.done');
-    const layout = () => cards.forEach((c, i) => {
-      c.classList.remove('back', 'back2');
-      if (i === idx + 1) c.classList.add('back');
-      if (i >= idx + 2) c.classList.add('back2');
-    });
+    var cards = $$('.card', deck), idx = 0, score = 0, locked = false;
+    var scoreEl = $('.score'), doneEl = $('.done'), ctl = $$('.game-ctl button');
+    cards.forEach(function (c, i) { c.style.zIndex = cards.length - i; });
+    function layout() {
+      cards.forEach(function (c, i) {
+        c.classList.remove('back', 'back2');
+        if (i === idx + 1) c.classList.add('back');
+        if (i >= idx + 2) c.classList.add('back2');
+      });
+    }
     layout();
-    const answer = ans => {
-      const c = cards[idx]; if (!c || c.classList.contains('reveal')) return;
-      const right = c.dataset.real === ans;
+    function answer(ans) {
+      var c = cards[idx];
+      if (!c || locked || c.classList.contains('reveal')) return;
+      locked = true;
+      var right = c.getAttribute('data-real') === ans;
       if (right) score++;
-      scoreEl.textContent = `${score} / ${cards.length}`;
+      scoreEl.textContent = score + ' / ' + cards.length;
       c.classList.add('reveal');
-      $('.why', c).textContent = (right ? '✅ Correct. ' : '❌ Not quite. ') + c.dataset.why;
-      setTimeout(() => {
-        c.classList.add(ans === 'yes' ? 'out-r' : 'out-l');
-        idx++; layout();
-        if (idx >= cards.length) {
-          $('.final', doneEl).textContent = `${score} / ${cards.length}`;
-          doneEl.classList.add('show');
-        }
-      }, 1900);
-    };
-    $$('.game-ctl button').forEach(b => b.addEventListener('click', () => answer(b.dataset.ans)));
-    $('.replay', doneEl)?.addEventListener('click', () => {
-      idx = 0; score = 0; scoreEl.textContent = `0 / ${cards.length}`; doneEl.classList.remove('show');
-      cards.forEach(c => c.classList.remove('reveal', 'out-l', 'out-r')); layout();
+      c.style.transform = '';
+      $('.why', c).textContent = (right ? '\u2705 Correct. ' : '\u274C Not quite. ') + c.getAttribute('data-why');
+      var nx = $('.next', c);
+      if (nx) nx.focus();
+    }
+    function advance() {
+      var c = cards[idx];
+      c.classList.add(c.getAttribute('data-real') === 'yes' ? 'out-r' : 'out-l');
+      idx++; locked = false; layout();
+      if (idx >= cards.length) {
+        $('.final', doneEl).textContent = score + ' / ' + cards.length;
+        doneEl.classList.add('show');
+        ctl.forEach(function (b) { b.disabled = true; });
+      }
+    }
+    ctl.forEach(function (b) { b.addEventListener('click', function () { answer(b.getAttribute('data-ans')); }); });
+    $$('.next', deck).forEach(function (b) { b.addEventListener('click', advance); });
+    var replay = $('.replay', doneEl);
+    if (replay) replay.addEventListener('click', function () {
+      idx = 0; score = 0; locked = false;
+      scoreEl.textContent = '0 / ' + cards.length;
+      doneEl.classList.remove('show');
+      ctl.forEach(function (b) { b.disabled = false; });
+      cards.forEach(function (c) { c.classList.remove('reveal', 'out-l', 'out-r'); c.style.transform = ''; });
+      layout();
     });
-    // swipe
-    let sx = 0;
-    deck.addEventListener('pointerdown', e => sx = e.clientX);
-    deck.addEventListener('pointerup', e => { const d = e.clientX - sx; if (Math.abs(d) > 70) answer(d > 0 ? 'yes' : 'no'); });
+    /* pointer swipe that actually follows the finger */
+    var dx = 0, dragging = false, top = null;
+    deck.addEventListener('pointerdown', function (e) {
+      top = cards[idx];
+      if (!top || locked || top.classList.contains('reveal')) { top = null; return; }
+      dragging = true; dx = 0; sxg = e.clientX; top.classList.add('drag');
+      try { deck.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    var sxg = 0;
+    deck.addEventListener('pointermove', function (e) {
+      if (!dragging || !top) return;
+      dx = e.clientX - sxg;
+      top.style.transform = 'translateX(' + dx + 'px) rotate(' + (dx / 22) + 'deg)';
+    });
+    function endDrag() {
+      if (!dragging || !top) return;
+      dragging = false; top.classList.remove('drag');
+      if (Math.abs(dx) > 70) { answer(dx > 0 ? 'yes' : 'no'); }
+      else { top.style.transform = ''; }
+      top = null;
+    }
+    deck.addEventListener('pointerup', endDrag);
+    deck.addEventListener('pointercancel', endDrag);
+    deck.addEventListener('pointerleave', endDrag);
   }
 
-  /* badge collector */
-  const badges = $$('.badge');
+  /* ---------- badge collector (A11Y-06) ---------- */
+  var badges = $$('.badge');
   if (badges.length) {
-    const fill = $('.bar i'), lab = $('.bar-lab');
-    const update = () => {
-      const n = $$('.badge.on').length, p = Math.round(n / badges.length * 100);
+    var fill = $('.bar i'), lab = $('.bar-lab');
+    function update() {
+      var n = badges.filter(function (b) { return b.getAttribute('aria-pressed') === 'true'; }).length;
+      var p = Math.round(n / badges.length * 100);
       fill.style.width = p + '%';
-      lab.textContent = n === 0 ? 'Tap the badges you already have.' : n === badges.length ? 'Full stack! Employers on Initi8Now see every one of these.' : `${n} of ${badges.length} collected — ${p}% profile strength`;
-    };
-    badges.forEach(b => b.addEventListener('click', () => { b.classList.toggle('on'); update(); }));
+      lab.textContent = n === 0 ? 'Select the badges you already have.'
+        : n === badges.length ? 'Full stack. Employers on Initi8Now would see every one of these.'
+        : n + ' of ' + badges.length + ' selected \u2014 ' + p + '% profile strength';
+    }
+    badges.forEach(function (b) {
+      b.addEventListener('click', function () {
+        b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+        update();
+      });
+    });
     update();
   }
 
-  /* landing reel: click to play, pause when scrolled away */
-  const reel = $('#reel'), reelv = $('#reelv');
-  if (reel && reelv) {
-    const start = () => { reel.classList.add('playing'); reelv.play(); };
-    reel.addEventListener('click', () => reelv.paused ? start() : (reelv.pause(), reel.classList.remove('playing')));
-    reelv.addEventListener('ended', () => reel.classList.remove('playing'));
-    new IntersectionObserver(es => es.forEach(e => {
-      if (!e.isIntersecting && !reelv.paused) { reelv.pause(); reel.classList.remove('playing'); }
-    }), { threshold: .25 }).observe(reel);
+  /* ---------- video reel ---------- */
+  var reel = $('#reel'), reelv = $('#reelv'), playBtn = $('#reel .play');
+  if (reel && reelv && playBtn) {
+    function sync() {
+      var playing = !reelv.paused && !reelv.ended;
+      reel.classList.toggle('playing', playing);
+      playBtn.setAttribute('aria-label', playing ? 'Pause the walkthrough' : 'Play the walkthrough');
+      $('span', playBtn).textContent = playing ? '\u275A\u275A' : '\u25B6';
+    }
+    playBtn.addEventListener('click', function () { reelv.paused ? reelv.play() : reelv.pause(); });
+    ['play', 'pause', 'ended'].forEach(function (ev) { reelv.addEventListener(ev, sync); });
+    sync();
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (!e.isIntersecting && !reelv.paused) reelv.pause(); });
+      }, { threshold: .25 }).observe(reel);
+    }
   }
 
-  /* team cards tap (mobile) */
-  $$('.member').forEach(m => m.addEventListener('click', () => m.classList.toggle('open')));
-
-  /* contact form → mailto (works without a backend) */
-  const form = $('#contact-form');
-  if (form) form.addEventListener('submit', e => {
-    e.preventDefault();
-    const d = new FormData(form);
-    const body = [...d.entries()].map(([k, v]) => `${k}: ${v}`).join('\n');
-    location.href = `mailto:info@initi8now.com?subject=${encodeURIComponent('[Website] ' + d.get('topic'))}&body=${encodeURIComponent(body)}`;
-    toast('Opening your email app…');
+  /* ---------- looping videos: pause control (A11Y-07) ---------- */
+  $$('[data-loopvid]').forEach(function (wrap) {
+    var v = $('video', wrap), b = $('button', wrap);
+    if (!v || !b) return;
+    if (reduce) { v.pause(); v.removeAttribute('autoplay'); }
+    function s() { b.textContent = v.paused ? 'Play' : 'Pause'; b.setAttribute('aria-label', (v.paused ? 'Play' : 'Pause') + ' this video'); }
+    b.addEventListener('click', function () { v.paused ? v.play() : v.pause(); });
+    ['play', 'pause'].forEach(function (ev) { v.addEventListener(ev, s); });
+    s();
   });
 
-  function toast(msg) {
-    let t = $('.toast'); if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
-    t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2600);
+  /* ---------- contact form (BUG-02) ---------- */
+  var form = $('#contact-form');
+  if (form) {
+    var status = $('#form-status');
+    form.addEventListener('submit', function (e) {
+      var endpoint = form.getAttribute('action') || '';
+      if (endpoint.indexOf('YOUR_FORM_ID') > -1 || !endpoint) {
+        /* Not connected yet: fall back to email so nothing is lost. */
+        e.preventDefault();
+        var d = new FormData(form), lines = [];
+        d.forEach(function (v, k) { lines.push(k + ': ' + v); });
+        window.location.href = 'mailto:info@initi8now.com?subject=' +
+          encodeURIComponent('[Website] ' + (d.get('topic') || 'Enquiry')) +
+          '&body=' + encodeURIComponent(lines.join('\n'));
+        return;
+      }
+      e.preventDefault();
+      var btn = $('button[type=submit]', form);
+      btn.disabled = true; btn.textContent = 'Sending\u2026';
+      fetch(endpoint, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } })
+        .then(function (r) {
+          if (!r.ok) throw new Error('bad response');
+          form.reset();
+          status.className = 'form-status ok';
+          status.textContent = 'Thank you. Your message has reached us and we will reply within one working day.';
+        })
+        .catch(function () {
+          status.className = 'form-status err';
+          status.textContent = 'Sorry, that did not send. Please email info@initi8now.com or call +91 63780 48013.';
+        })
+        .then(function () { btn.disabled = false; btn.textContent = 'Send message'; status.focus(); });
+    });
   }
-  window.i8toast = toast;
 })();
