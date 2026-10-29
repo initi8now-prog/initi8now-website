@@ -3,6 +3,31 @@
 Static site: HTML + CSS + JS. No build step, no framework. Upload the folder as-is.
 Dark theme throughout. Fonts are self-hosted, so nothing loads from Google.
 
+## Running Locally
+
+Because the project uses root-relative assets (e.g. `/assets/...`) and directory-based clean URLs (e.g. `students/`), serve the `initi8now-website` folder using a local HTTP server rather than opening HTML files directly from the filesystem.
+
+### Option 1: Live Server (Node / npx — auto reload on save)
+```bash
+cd initi8now-website
+npx live-server
+```
+or
+```bash
+npx serve .
+```
+
+### Option 2: Python (no installation needed)
+```bash
+cd initi8now-website
+python -m http.server 8000
+```
+Then visit `http://localhost:8000`.
+
+### Option 3: VS Code / IDE Extension
+Use the **Live Server** extension and click **"Go Live"** in the status bar.
+
+
 ## Pages (clean URLs)
 ```
 index.html             initi8now.com/
@@ -56,7 +81,8 @@ and submit sitemap.xml (audit SEO-03).
 ## Edit the basics
 - Phone / email / socials: change them in the build or search-and-replace
   `6378048013`, `info@initi8now.com`.
-- Early-access form link: search for `tally.so/r/5Blg4E`.
+- Web app signup/login link: `https://web.initi8now.com/login` (replaces old `tally.so/r/5Blg4E` link across all pages).
+- Version number: update `version.json` and the footer in `index.html`.
 - Ticker roles: the `<span>` items inside `<div class="ticker">` in index.html.
 - Earnings calculator rates: the `KINDS` object near the top of js/main.js.
 - Team bios: team/index.html.
